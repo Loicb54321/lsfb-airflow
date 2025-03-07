@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<ANNOTATION_DOCUMENT AUTHOR="" DATE="2023-07-11T11:00:00+01:00" VERSION="3.0" FORMAT="3.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://www.mpi.nl/tools/elan/EAFv2.8.xsd">
+	<HEADER MEDIA_FILE="" TIME_UNITS="milliseconds">
+	</HEADER>
+	<TIME_ORDER>
+	</TIME_ORDER>
+	<LINGUISTIC_TYPE CONTROLLED_VOCABULARY_REF="lsfb_vocabulaire" GRAPHIC_REFERENCES="false" LINGUISTIC_TYPE_ID="LSFB" TIME_ALIGNABLE="true" />
+	<LINGUISTIC_TYPE GRAPHIC_REFERENCES="false" LINGUISTIC_TYPE_ID="Traduction" TIME_ALIGNABLE="true" />
+	<LANGUAGE LANG_ID="und" LANG_DEF="http://cdb.iso.org/lg/CDB-00130975-001" LANG_LABEL="undetermined (und)" />
+	<CONSTRAINT STEREOTYPE="Time_Subdivision" DESCRIPTION="Time subdivision of parent annotation's time interval, no time gaps allowed within this interval" />
+	<CONSTRAINT STEREOTYPE="Symbolic_Subdivision" DESCRIPTION="Symbolic subdivision of a parent annotation. Annotations refering to the same parent are ordered" />
+	<CONSTRAINT STEREOTYPE="Symbolic_Association" DESCRIPTION="1-1 association with a parent annotation" />
+	<CONSTRAINT STEREOTYPE="Included_In" DESCRIPTION="Time alignable annotations within the parent annotation's time interval, gaps are allowed" />
+	<CONTROLLED_VOCABULARY CV_ID="lsfb_vocabulaire" EXT_REF="er1" />
+	<EXTERNAL_REF EXT_REF_ID="er1" TYPE="ecv" VALUE="http://www.corpus-lsfb.be/lsfb.ecv" />
+</ANNOTATION_DOCUMENT>
