@@ -12,7 +12,6 @@ FILE_HISTORY_PATH = os.path.join(LOCAL_SERVER, "file_history_HF.json")
 
 # Hugging Face credentials
 HF_TOKEN = Variable.get("HF_TOKEN")  # Secure token storage in Airflow
-print(HF_TOKEN, flush=True)
 REPO_ID = "Loic54321/lsfb_dataset"  # Your HF dataset repo
 
 # Function to load history

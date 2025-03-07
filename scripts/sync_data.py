@@ -10,7 +10,7 @@ from converter import convert_elan_file
 from dotenv import load_dotenv
 load_dotenv()
 
-# Paths
+# Paths 
 REMOTE_SERVER = os.getenv("REMOTE_SERVER")
 LOCAL_SERVER = os.getenv("LOCAL_SERVER")
 FILE_HISTORY = os.path.join(LOCAL_SERVER, "file_history.json")
