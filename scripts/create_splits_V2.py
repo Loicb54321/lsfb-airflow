@@ -2,11 +2,15 @@ import os
 import re
 import json
 import random
+from dotenv import load_dotenv
+load_dotenv()
+
+LOCAL_SERVER = os.getenv("LOCAL_SERVER")
 
 # Paths
-DATABASE = "/opt/airflow/data/sample-lsfb/local_server/isol/videos"
-SPLIT_PATH_ISOL = "/opt/airflow/data/sample-lsfb/local_server/isol/metadata/splits"
-SPLIT_PATH_CONT = "/opt/airflow/data/sample-lsfb/local_server/cont/metadata/splits"
+DATABASE = os.path.join(LOCAL_SERVER, "isol/videos")
+SPLIT_PATH_ISOL = DATABASE = os.path.join(LOCAL_SERVER, "isol/metadata/splits")
+SPLIT_PATH_CONT = DATABASE = os.path.join(LOCAL_SERVER, "cont/metadata/splits")
 
 sample_size = 100
 

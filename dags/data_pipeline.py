@@ -4,6 +4,10 @@ from datetime import datetime, timedelta
 import subprocess
 import os
 import json
+from dotenv import load_dotenv
+load_dotenv()
+
+LOCAL_SERVER = os.getenv("LOCAL_SERVER")
 
 # Define default DAG arguments
 default_args = {
@@ -40,9 +44,9 @@ def check_and_download_data():
 # Function to treat the video files + update the CSV files
 def run_video_script():
     script_path = "/opt/airflow/scripts/convert_video_files.py"
-    elan_dir = "/opt/airflow/data/sample-lsfb/local_server/ELAN_OUT"      
-    output_dir = "/opt/airflow/data/sample-lsfb/local_server/isol/videos"  
-    update_file = "/opt/airflow/data/sample-lsfb/local_server/file_update.json"
+    elan_dir = os.path.join(LOCAL_SERVER, "ELAN_OUT")     
+    output_dir = os.path.join(LOCAL_SERVER, "isol/videos")  
+    update_file = os.path.join(LOCAL_SERVER, "file_update.json")
 
     # Load the update file
     with open(update_file, "r", encoding="utf-8") as f:
@@ -143,17 +147,17 @@ task_run_video_script = PythonOperator(
     dag=dag,
 )
 
-# task_extract_poses_cont = PythonOperator(
-#     task_id="extract_poses_cont",
-#     python_callable=run_extract_poses_cont,
-#     dag=dag,
-# )
+task_extract_poses_cont = PythonOperator(
+    task_id="extract_poses_cont",
+    python_callable=run_extract_poses_cont,
+    dag=dag,
+)
 
-# task_extract_poses_isol = PythonOperator(
-#     task_id="extract_poses_isol",
-#     python_callable=run_extract_poses_isol,
-#     dag=dag,
-# )
+task_extract_poses_isol = PythonOperator(
+    task_id="extract_poses_isol",
+    python_callable=run_extract_poses_isol,
+    dag=dag,
+)
 
 task_create_splits = PythonOperator(
     task_id='create_splits',
@@ -168,9 +172,7 @@ task_update_csv = PythonOperator(
 )
 
 # Define task dependencies
-# task_check_server >> [task_run_elan_script , task_extract_poses_cont, task_run_video_script]
-# task_run_video_script >> task_extract_poses_isol 
-# [task_extract_poses_cont, task_extract_poses_isol] >> task_create_splits
+task_check_server >> [task_extract_poses_cont, task_run_video_script]
+task_run_video_script >> task_extract_poses_isol 
+[task_extract_poses_cont, task_extract_poses_isol] >> task_create_splits >> task_update_csv
 
-
-task_check_server >> task_run_video_script >> task_create_splits >> task_update_csv

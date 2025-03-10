@@ -12,6 +12,8 @@ load_dotenv()
 
 # Paths 
 REMOTE_SERVER = os.getenv("REMOTE_SERVER")
+REMOTE_SERVER_ELAN = os.getenv("REMOTE_SERVER_ELAN")
+REMOTE_SERVER_VIDEO = os.getenv("REMOTE_SERVER_VIDEO")
 LOCAL_SERVER = os.getenv("LOCAL_SERVER")
 FILE_HISTORY = os.path.join(LOCAL_SERVER, "file_history.json")
 FILE_UPDATE = os.path.join(LOCAL_SERVER, "file_update.json")
@@ -228,13 +230,13 @@ def update_database(added_files, modified_files):
         if file.endswith(".eaf") and VALID_ELAN_REGEX.match(file):
             elan_path = os.path.join(ELAN_FILES, file)
             print(f"Copying {file} to database...")
-            convert_elan_file(os.path.join(REMOTE_SERVER, "ELAN_IN", file[:8], file), ELAN_FILES)
+            convert_elan_file(os.path.join(REMOTE_SERVER_ELAN, file[:8], file), ELAN_FILES)
             base_names = extract_base_names(elan_path)
             for base_name in base_names:
                 video_file = f"{base_name}.mp4"
                 if VALID_VIDEO_REGEX.match(video_file):
                     print(f"Copying {video_file} to database...")
-                    shutil.copy2(os.path.join(REMOTE_SERVER, "VIDEOS_NETTES", f"CLSFB - {video_file[6:8]} ok", video_file), os.path.join(VIDEO_CONT_PATH, video_file))
+                    shutil.copy2(os.path.join(REMOTE_SERVER_VIDEO, f"CLSFB - {video_file[6:8]} ok", video_file), os.path.join(VIDEO_CONT_PATH, video_file))
             
 
 

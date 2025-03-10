@@ -3,10 +3,14 @@ import glob
 import xml.etree.ElementTree as ET
 import csv
 from convert_video_files import parse_elan, parse_media_files
+from dotenv import load_dotenv
+load_dotenv()
 
-input_folder = "/opt/airflow/data/sample-lsfb/local_server/ELAN_OUT"
-instances_csv = "/opt/airflow/data/sample-lsfb/local_server/isol/instances.csv"
-subtitles_csv = "/opt/airflow/data/sample-lsfb/local_server/cont/subtitles.csv"
+LOCAL_SERVER = os.getenv("LOCAL_SERVER")
+
+input_folder = os.path.join(LOCAL_SERVER, "ELAN_OUT")
+instances_csv = os.path.join(LOCAL_SERVER, "isol/instances.csv")
+subtitles_csv = os.path.join(LOCAL_SERVER, "cont/subtitles.csv")
 
 """Process all ELAN files in the given folder and save results to a CSV file."""
 elan_files = glob.glob(os.path.join(input_folder, "*.eaf"))

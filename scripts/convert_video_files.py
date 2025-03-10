@@ -6,12 +6,16 @@ import csv
 import json
 from collections import Counter
 from moviepy.editor import VideoFileClip
+from dotenv import load_dotenv
+load_dotenv()
+
+LOCAL_SERVER = os.getenv("LOCAL_SERVER")
 
 # Path to the CSV files and video cont directory
 # csv_path = "/opt/airflow/data/sample-lsfb/local_server/isol/instances.csv"
 # sign_count_csv_path = "/opt/airflow/data/sample-lsfb/local_server/isol/sign_counts.csv"
 # sorted_csv_path = "/opt/airflow/data/sample-lsfb/local_server/isol/sorted_instances.csv"
-base_path = "/opt/airflow/data/sample-lsfb/local_server/cont/videos" 
+base_path = os.path.join(LOCAL_SERVER, "cont/videos") 
 
 tier_id_filter = ["SA-MG-LEMMES", "SA-MD-LEMMES", "SB-MG-LEMMES", "SB-MD-LEMMES"]
 translation_tier_id_filter = ["SA-TRADUCTION", "SB-TRADUCTION"]

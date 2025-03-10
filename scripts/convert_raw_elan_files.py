@@ -1,16 +1,20 @@
 # from converter import convert_all_elan_files, for now this script seems useless but i keep it to be safe
-from export import create_annotation_files
+# from export import create_annotation_files
+# from dotenv import load_dotenv
+# load_dotenv()
 
-root = "/opt/airflow"                          
+# LOCAL_SERVER = os.getenv("LOCAL_SERVER")
+
+# root = "/opt/airflow"                          
 # convert_all_elan_files(
 #     f"{root}/data/sample-lsfb/remote_server/ELAN_IN",
 #     f"{root}/data/sample-lsfb/local_server/ELAN_OUT",
 # )
 
-create_annotation_files(
-    f"{root}/data/sample-lsfb/local_server/ELAN_OUT",
-    f"{root}/data/sample-lsfb/local_server/JSON",
-)
+# create_annotation_files(
+#     f"{root}/data/sample-lsfb/local_server/ELAN_OUT",
+#     f"{root}/data/sample-lsfb/local_server/JSON",
+# )
 
 # Function to treat the ELAN files to put in dag if needed
 # def run_elan_script():
