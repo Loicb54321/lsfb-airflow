@@ -236,11 +236,17 @@ def update_database(added_files, modified_files):
             base_names = extract_base_names(elan_path)
             for base_name in base_names:
                 video_file = f"{base_name}.mp4"
-                if VALID_VIDEO_REGEX.match(video_file):
-                    print(f"Copying {video_file} to database...")
-                    shutil.copyfile(os.path.join(REMOTE_SERVER_VIDEO, f"CLSFB - {video_file[6:8]} ok", video_file), os.path.join(VIDEO_CONT_PATH, video_file))
-            
+                video_source_path = os.path.join(REMOTE_SERVER_VIDEO, f"CLSFB - {video_file[6:8]} ok", video_file)
+                video_dest_path = os.path.join(VIDEO_CONT_PATH, video_file)
 
+                if VALID_VIDEO_REGEX.match(video_file):
+                    if os.path.exists(video_source_path):
+                        print(f"Copying {video_file} to database...")
+                        shutil.copyfile(video_source_path, video_dest_path)
+                    else:
+                        print(f"⚠️ ERROR: {video_file} not found! Deleting ELAN file: {elan_path}")
+                        os.remove(elan_path)
+                        break
 
         # if not file.endswith(".mp4"):
         #     if not file.endswith(".eaf"):
