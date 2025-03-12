@@ -1,5 +1,11 @@
 import os
 import time
+from dotenv import load_dotenv
+load_dotenv()
+
+# Paths
+LOCAL_SERVER = os.getenv("LOCAL_SERVER")
+timestamp_file_path = os.path.join(LOCAL_SERVER, "last_dag_run.txt")
 
 """
 copy this to use : 
@@ -12,8 +18,6 @@ if not is_it_new(file_path):
 
 update_last_dag_run()
 """
-
-timestamp_file_path = "/opt/airflow/data/sample-lsfb/local_server/last_dag_run.txt"
 
 def is_it_new(file_or_timestamp, timestamp_file=timestamp_file_path):
     """

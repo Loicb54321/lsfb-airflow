@@ -5,13 +5,16 @@ import os
 import json
 from huggingface_hub import HfApi
 from airflow.models import Variable
+from dotenv import load_dotenv
+load_dotenv()
 
 # Paths
-LOCAL_SERVER = "/opt/airflow/data/sample-lsfb/local_server"
+LOCAL_SERVER = os.getenv("LOCAL_SERVER")
 FILE_HISTORY_PATH = os.path.join(LOCAL_SERVER, "file_history_HF.json")
 
 # Hugging Face credentials
 HF_TOKEN = Variable.get("HF_TOKEN")  # Secure token storage in Airflow
+# HF_TOKEN = os.getenv("HF_TOKEN")
 REPO_ID = "Loic54321/lsfb_dataset"  # Your HF dataset repo
 
 # Function to load history

@@ -23,7 +23,8 @@ dag = DAG(
     'data_pipeline',
     default_args=default_args,
     description='Pipeline to check Server X, process video data, and store results',
-    schedule_interval='@daily',  # Runs once a day
+    # schedule_interval='@daily',  # Runs once a day
+    schedule=None,  # Manually triggered
     catchup=False,
 )
 

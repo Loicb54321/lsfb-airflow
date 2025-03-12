@@ -78,7 +78,9 @@ def get_files(directory):
 
 def sync_files():
     """Compare remote and local files, determine changes."""
-    remote_files = get_files(REMOTE_SERVER)
+    remote_files_video = get_files(REMOTE_SERVER_VIDEO)
+    remote_files_elan = get_files(REMOTE_SERVER_ELAN)
+    remote_files = {**remote_files_video, **remote_files_elan}
     local_files = get_files(LOCAL_SERVER)
     file_history = load_file_history()
 
@@ -236,7 +238,7 @@ def update_database(added_files, modified_files):
                 video_file = f"{base_name}.mp4"
                 if VALID_VIDEO_REGEX.match(video_file):
                     print(f"Copying {video_file} to database...")
-                    shutil.copy2(os.path.join(REMOTE_SERVER_VIDEO, f"CLSFB - {video_file[6:8]} ok", video_file), os.path.join(VIDEO_CONT_PATH, video_file))
+                    shutil.copyfile(os.path.join(REMOTE_SERVER_VIDEO, f"CLSFB - {video_file[6:8]} ok", video_file), os.path.join(VIDEO_CONT_PATH, video_file))
             
 
 

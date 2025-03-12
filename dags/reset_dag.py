@@ -3,11 +3,14 @@ from airflow.operators.python import PythonOperator
 from datetime import datetime
 import os
 import json
+from dotenv import load_dotenv
+load_dotenv()
 
 # Define paths
-LOCAL_SERVER = "/opt/airflow/data/sample-lsfb/local_server"
+LOCAL_SERVER = os.getenv("LOCAL_SERVER")
 LAST_DAG_RUN_PATH = os.path.join(LOCAL_SERVER, "last_dag_run.txt")
 FILE_HISTORY_PATH = os.path.join(LOCAL_SERVER, "file_history.json")
+FILE_HISTORY_HF_PATH = os.path.join(LOCAL_SERVER, "file_history_HF.json")
 FILE_UPDATE_PATH = os.path.join(LOCAL_SERVER, "file_update.json")
 
 # Function to reset files
@@ -18,7 +21,7 @@ def reset_files():
         f.write("0")
 
     # Clear JSON files
-    for file_path in [FILE_HISTORY_PATH, FILE_UPDATE_PATH]:
+    for file_path in [FILE_HISTORY_PATH, FILE_UPDATE_PATH, FILE_HISTORY_HF_PATH]:
         with open(file_path, "w") as f:
             json.dump({}, f)  # Empty JSON object
 
