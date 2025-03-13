@@ -68,8 +68,12 @@ def run_video_script():
     if not elan_files:
         print("❌ No ELAN files found in", elan_dir)
         return
+    
+    progression = 0
 
     for elan_file in elan_files:
+        progression += 1
+        print(f"⏱️ Processing ELAN file {progression}/{len(elan_files)}: {elan_file}")
         try:
             print(f"🚀 Processing {elan_file} ...")
             result = subprocess.run(

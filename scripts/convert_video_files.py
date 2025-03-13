@@ -95,7 +95,7 @@ def parse_elan(elan_file: str):
 
 def extract_segment(video_file: str, start_ms: int, end_ms: int, output_file: str):
     """Extract a segment from the video using MoviePy."""
-    print(f"🔍 Extracting segment: {video_file} ({start_ms}ms to {end_ms}ms)", flush=True)
+    # print(f"🔍 Extracting segment: {video_file} ({start_ms}ms to {end_ms}ms)", flush=True)
     start_sec = start_ms / 1000.0
     end_sec = end_ms / 1000.0
     if os.path.exists(output_file):  #  Skip extraction if file exists                               # peut être qu'il faudra suprimer/modifier
@@ -128,7 +128,7 @@ def main():
     if not annotations:
         print("⚠️ No annotations found in the ELAN file.", flush=True)
         sys.exit(1)
-    print (f'subtitles : {subtitles}', flush=True)  
+    # print (f'subtitles : {subtitles}', flush=True)  
     
     media_mapping = {key: os.path.join(base_path, "/".join(value.split("/")[-1:])) for key, value in media_mapping.items()}
 
@@ -153,7 +153,7 @@ def main():
             continue
         
         video_file = media_mapping[participant]
-        print(f"📹 Video file for participant {participant}: {video_file}", flush=True)
+        # print(f"📹 Video file for participant {participant}: {video_file}", flush=True)
         if not os.path.isabs(video_file):
             elan_dir = os.path.dirname(os.path.abspath(args.elan_file))
             video_file = os.path.normpath(os.path.join(elan_dir, video_file))

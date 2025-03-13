@@ -4,8 +4,10 @@ import mediapipe as mp
 from PIL import Image
 from moviepy.editor import VideoFileClip
 from scipy.signal import savgol_filter
+from airflow.utils.log.logging_mixin import LoggingMixin
 from dotenv import load_dotenv
 load_dotenv()
+log = LoggingMixin().log
 
 LOCAL_SERVER = os.getenv("LOCAL_SERVER")
 
@@ -50,8 +52,14 @@ filtered_output_folders = {
 for folder in {**output_folders, **filtered_output_folders}.values():
     os.makedirs(folder, exist_ok=True)
 
+videos_to_process = os.listdir(video_folder)
+progression = 0
+
 # Process each video
-for video_file in os.listdir(video_folder):
+for video_file in videos_to_process:
+    progression += 1
+    log.info(f"⏱️ Video {progression}/{len(videos_to_process)}: {video_file} ...")
+
     if not video_file.endswith(('.mp4', '.avi', '.mov')):  # Ensure it's a video file
         continue
 
@@ -107,9 +115,9 @@ for video_file in os.listdir(video_folder):
         left_hand_data.append(extract_landmarks(results.left_hand_landmarks, 21))
         right_hand_data.append(extract_landmarks(results.right_hand_landmarks, 21))
 
-    print(f"face_data type: {type(face_data)}", flush=True)
-    print(f"face_data length: {len(face_data)}", flush=True)
-    print(f"face_data[0] shape: {np.shape(face_data[0]) if len(face_data) > 0 else 'empty'}", flush=True)
+    # print(f"face_data type: {type(face_data)}", flush=True)
+    # print(f"face_data length: {len(face_data)}", flush=True)
+    # print(f"face_data[0] shape: {np.shape(face_data[0]) if len(face_data) > 0 else 'empty'}", flush=True)
 
     # Convert to NumPy arrays
     pose_data_np = np.array(pose_data)  
