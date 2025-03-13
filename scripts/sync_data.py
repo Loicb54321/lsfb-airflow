@@ -104,7 +104,7 @@ def sync_files():
             if file.endswith(".eaf") and VALID_ELAN_REGEX.match(file):
                 file_update[file] = mod_time
             # If the file is not in history, it's a new addition
-            if file not in file_history:
+            # if file not in file_history:
                 # file_history[file] = mod_time
                 added_files[file] = mod_time
             # elif is_it_new(mod_time):
@@ -231,22 +231,26 @@ def update_database(added_files, modified_files):
 
         if file.endswith(".eaf") and VALID_ELAN_REGEX.match(file):
             elan_path = os.path.join(ELAN_FILES, file)
-            print(f"Copying {file} to database...")
-            convert_elan_file(os.path.join(REMOTE_SERVER_ELAN, file[:8], file), ELAN_FILES)
-            base_names = extract_base_names(elan_path)
-            for base_name in base_names:
-                video_file = f"{base_name}.mp4"
-                video_source_path = os.path.join(REMOTE_SERVER_VIDEO, f"CLSFB - {video_file[6:8]} ok", video_file)
-                video_dest_path = os.path.join(VIDEO_CONT_PATH, video_file)
+            try:
+                print(f"Copying {file} to database...")
+                convert_elan_file(os.path.join(REMOTE_SERVER_ELAN, file[:8], file), ELAN_FILES)
+                base_names = extract_base_names(elan_path)
+                for base_name in base_names:
+                    video_file = f"{base_name}.mp4"
+                    video_source_path = os.path.join(REMOTE_SERVER_VIDEO, f"CLSFB - {video_file[6:8]} ok", video_file)
+                    video_dest_path = os.path.join(VIDEO_CONT_PATH, video_file)
 
-                if VALID_VIDEO_REGEX.match(video_file):
-                    if os.path.exists(video_source_path):
-                        print(f"Copying {video_file} to database...")
-                        shutil.copyfile(video_source_path, video_dest_path)
-                    else:
-                        print(f"⚠️ ERROR: {video_file} not found! Deleting ELAN file: {elan_path}")
-                        os.remove(elan_path)
-                        break
+                    if VALID_VIDEO_REGEX.match(video_file):
+                        if os.path.exists(video_source_path):
+                            print(f"Copying {video_file} to database...")
+                            shutil.copyfile(video_source_path, video_dest_path)
+                        else:
+                            print(f"⚠️ ERROR: {video_file} not found! Deleting ELAN file: {elan_path}")
+                            os.remove(elan_path)
+                            raise FileNotFoundError(f"{video_file} is missing.")
+            except Exception as e:
+                print(f"Skipping {file} due to error: {e}")
+                continue
 
         # if not file.endswith(".mp4"):
         #     if not file.endswith(".eaf"):
