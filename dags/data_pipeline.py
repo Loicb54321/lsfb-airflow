@@ -87,28 +87,38 @@ def run_video_script():
 
 def run_extract_poses_cont():
     try:
-        result = subprocess.run(
+        process = subprocess.Popen(
             ["python3", "/opt/airflow/scripts/extract_poses_cont.py"],
-            check=True,
-            capture_output=True,  # Capture stdout/stderr
-            text=True
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
         )
-        print("Script output:", result.stdout)
-    except subprocess.CalledProcessError as e:
-        print("Script failed!", e.stderr)
+        for line in process.stdout:
+            print(line, end='', flush=True)
+        exit_code = process.wait()
+        if exit_code != 0:
+            raise subprocess.CalledProcessError(exit_code, process.args)
+    except Exception as e:
+        print(f"Script failed! {str(e)}")
         raise
 
 def run_extract_poses_isol():
     try:
-        result = subprocess.run(
+        process = subprocess.Popen(
             ["python3", "/opt/airflow/scripts/extract_poses_isol.py"],
-            check=True,
-            capture_output=True,  # Capture stdout/stderr
-            text=True
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
         )
-        print("Script output:", result.stdout)
-    except subprocess.CalledProcessError as e:
-        print("Script failed!", e.stderr)
+        for line in process.stdout:
+            print(line, end='', flush=True)
+        exit_code = process.wait()
+        if exit_code != 0:
+            raise subprocess.CalledProcessError(exit_code, process.args)
+    except Exception as e:
+        print(f"Script failed! {str(e)}")
         raise
 
 def create_splits():

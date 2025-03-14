@@ -1,13 +1,15 @@
 import os
 import numpy as np
 import mediapipe as mp
+import sys
 from PIL import Image
 from moviepy.editor import VideoFileClip
 from scipy.signal import savgol_filter
 from airflow.utils.log.logging_mixin import LoggingMixin
 from dotenv import load_dotenv
 load_dotenv()
-log = LoggingMixin().log
+log = LoggingMixin().log 
+sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', buffering=1)
 
 LOCAL_SERVER = os.getenv("LOCAL_SERVER")
 
@@ -59,6 +61,7 @@ progression = 0
 for video_file in videos_to_process:
     progression += 1
     log.info(f"⏱️ Video {progression}/{len(videos_to_process)}: {video_file} ...")
+    sys.stdout.flush()
     
     if not video_file.endswith(('.mp4', '.avi', '.mov')):  # Ensure it's a video file
         continue
