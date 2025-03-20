@@ -7,7 +7,7 @@ from moviepy.editor import VideoFileClip
 from scipy.signal import savgol_filter
 from airflow.utils.log.logging_mixin import LoggingMixin
 from dotenv import load_dotenv
-import multiprocessing as mp
+import multiprocessing as mpc
 import time
 import queue
 import threading
@@ -184,11 +184,11 @@ def main():
     log.info(f"Found {total_videos} videos to process")
     
     # Determine the number of processes to use (leave one core free)
-    num_processes = max(1, mp.cpu_count() - 1)
+    num_processes = max(1, mpc.cpu_count() - 1)
     log.info(f"Using {num_processes} parallel processes")
     
     # Create a pool of processes
-    with mp.Pool(processes=num_processes) as pool:
+    with mpc.Pool(processes=num_processes) as pool:
         # Create a list of (video_file, total_videos, index) tuples for each video
         tasks = [(video, total_videos, i+1) for i, video in enumerate(videos_to_process)]
         
