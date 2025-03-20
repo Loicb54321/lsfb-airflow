@@ -1,14 +1,18 @@
 import os
 import shutil
+import sys
 import re
-import glob
-import xml.etree.ElementTree as ET
 import time
+import xml.etree.ElementTree as ET
 import json
 from is_it_new import is_it_new, update_last_dag_run 
 from converter import convert_elan_file
+from airflow.utils.log.logging_mixin import LoggingMixin
 from dotenv import load_dotenv
 load_dotenv()
+
+log = LoggingMixin().log 
+sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', buffering=1)
 
 # Paths 
 REMOTE_SERVER = os.getenv("REMOTE_SERVER")
@@ -276,8 +280,15 @@ def update_database(added_files, modified_files):
 
 def main():
     print("🔄 Syncing files...")
+
     added_files, modified_files, deleted_files = sync_files()
-    
+
+    log.info("added files : ", added_files)
+    log.info("modified files : ", modified_files)
+    log.info("deleted files : ", deleted_files)
+    sys.stdout.flush()
+    time.sleep(30) 
+
     print("🗑️ Cleaning deleted files...")
     clean_deleted(deleted_files)
 

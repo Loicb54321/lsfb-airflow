@@ -8,7 +8,6 @@ from scipy.signal import savgol_filter
 from airflow.utils.log.logging_mixin import LoggingMixin
 from dotenv import load_dotenv
 import multiprocessing as mp
-from functools import partial
 import time
 import queue
 import threading
