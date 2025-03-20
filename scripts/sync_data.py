@@ -85,7 +85,9 @@ def sync_files():
     remote_files_video = get_files(REMOTE_SERVER_VIDEO)
     remote_files_elan = get_files(REMOTE_SERVER_ELAN)
     remote_files = {**remote_files_video, **remote_files_elan}
-    local_files = get_files(LOCAL_SERVER)
+    local_files_video = get_files(VIDEO_CONT_PATH)
+    local_files_elan = get_files(ELAN_FILES)
+    local_files = {**local_files_video, **local_files_elan}
     file_history = load_file_history()
 
     print("remote_files : ",remote_files, flush=True)
