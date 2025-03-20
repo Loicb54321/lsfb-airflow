@@ -285,13 +285,13 @@ def main():
 
     added_files, modified_files, deleted_files = sync_files()
 
-    log.info("added files : ", added_files)
+    log.info(f"added files : {added_files}")
     sys.stdout.flush()
     time.sleep(5)
-    log.info("modified files : ", modified_files)
+    log.info(f"modified files : {modified_files}")
     sys.stdout.flush()
     time.sleep(5)
-    log.info("deleted files : ", deleted_files)
+    log.info(f"deleted files : {deleted_files}")
     sys.stdout.flush()
     time.sleep(30) 
 

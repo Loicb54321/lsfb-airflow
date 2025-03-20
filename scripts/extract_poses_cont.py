@@ -99,11 +99,10 @@ def process_video(video_file, total_videos, video_index):
 
     # Check if all expected output files already exist
     if all(os.path.exists(path) for path in {**expected_files, **expected_filtered_files}.values()):
-        log_queue.put(f"✅ Video {video_index}/{total_videos}: {video_file} - Already processed. Skipping.")
+        log.info(f"✅ Video {video_index}/{total_videos}: {video_file} - Already processed. Skipping.")
         return
 
     start_time = time.time()
-    log_queue.put(f"⏱️ Video {video_index}/{total_videos}: {video_file} - Starting processing...")
 
     try:
         # Load the video using MoviePy
@@ -141,7 +140,7 @@ def process_video(video_file, total_videos, video_index):
             frame_count += 1
             if frame_count % progress_interval == 0:
                 progress = (frame_count / total_frames) * 100
-                log_queue.put(f"  🔄 Video {video_index}/{total_videos}: {video_file} - {progress:.1f}% processed ({frame_count}/{total_frames} frames)")
+                log.info(f"  🔄 Video {video_index}/{total_videos}: {video_file} - {progress:.1f}% processed ({frame_count}/{total_frames} frames)")
 
         # Convert to NumPy arrays
         pose_data_np = np.array(pose_data)  
@@ -151,7 +150,7 @@ def process_video(video_file, total_videos, video_index):
         data_np = [pose_data_np, face_data_np, left_hand_data_np, right_hand_data_np]
         body_parts = ["pose", "face", "left_hand", "right_hand"]
 
-        log_queue.put(f"  💾 Video {video_index}/{total_videos}: {video_file} - Saving data to disk...")
+        log.info(f"  💾 Video {video_index}/{total_videos}: {video_file} - Saving data to disk...")
         
         for i in range(4):
             np.save(expected_files[body_parts[i]], data_np[i])  # Save raw poses data
@@ -166,10 +165,10 @@ def process_video(video_file, total_videos, video_index):
         
         end_time = time.time()
         duration = end_time - start_time
-        log_queue.put(f"✅ Video {video_index}/{total_videos}: {video_file} - Completed in {duration:.2f} seconds")
+        log.info(f"✅ Video {video_index}/{total_videos}: {video_file} - Completed in {duration:.2f} seconds")
         
     except Exception as e:
-        log_queue.put(f"❌ Video {video_index}/{total_videos}: {video_file} - Error: {str(e)}")
+        log.info(f"❌ Video {video_index}/{total_videos}: {video_file} - Error: {str(e)}")
         
     return
 
