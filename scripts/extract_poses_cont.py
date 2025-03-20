@@ -71,8 +71,6 @@ def log_worker():
 # Function to process a single video
 def process_video(video_file, total_videos, video_index):
     # Each process needs its own MediaPipe instance
-    log.info(f"🚀 Video {video_index}/{total_videos}: {video_file} - Starting process...")
-    sys.stdout.flush()
     mp_holistic = mp.solutions.holistic
     holistic = mp_holistic.Holistic(static_image_mode=False, model_complexity=2)
     
@@ -101,7 +99,8 @@ def process_video(video_file, total_videos, video_index):
     if all(os.path.exists(path) for path in {**expected_files, **expected_filtered_files}.values()):
         log.info(f"✅ Video {video_index}/{total_videos}: {video_file} - Already processed. Skipping.")
         return
-
+    log.info(f"🚀 Video {video_index}/{total_videos}: {video_file} - Starting process...")
+    sys.stdout.flush()
     start_time = time.time()
 
     try:
@@ -178,8 +177,8 @@ def main():
     log_thread.daemon = True
     log_thread.start()
     
-    videos_to_process = [f for f in os.listdir(video_folder) 
-                        if f.endswith(('.mp4', '.avi', '.mov'))]
+    videos_to_process = sorted([f for f in os.listdir(video_folder) 
+                        if f.endswith(('.mp4', '.avi', '.mov'))])
     
     total_videos = len(videos_to_process)
     log.info(f"Found {total_videos} videos to process")
