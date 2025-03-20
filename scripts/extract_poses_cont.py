@@ -71,6 +71,8 @@ def log_worker():
 # Function to process a single video
 def process_video(video_file, total_videos, video_index):
     # Each process needs its own MediaPipe instance
+    log.info(f"🚀 Video {video_index}/{total_videos}: {video_file} - Starting process...")
+    sys.stdout.flush()
     mp_holistic = mp.solutions.holistic
     holistic = mp_holistic.Holistic(static_image_mode=False, model_complexity=2)
     
