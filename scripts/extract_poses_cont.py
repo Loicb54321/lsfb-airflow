@@ -58,9 +58,6 @@ for folder in {**output_folders, **filtered_output_folders}.values():
 # A thread-safe queue for logging
 log_queue = queue.Queue()
 
-# Global variable to track processed videos
-processed_videos = 0
-
 # Thread function to process logs
 def log_worker():
     while True:
@@ -72,16 +69,15 @@ def log_worker():
         log_queue.task_done()
 
 # Function to process a single video
-def process_video(video_file, total_videos):
-    # Each process needs its own MediaPipe instance
-    video_index = processed_videos
-    processed_videos += 1
+def process_video(video_file, total_videos, processed_videos):
+    video_index = processed_videos.value
+    processed_videos.value += 1
 
     mp_holistic = mp.solutions.holistic
     holistic = mp_holistic.Holistic(static_image_mode=False, model_complexity=2)
     
     # Skip non-video files
-    if not video_file.endswith(('.mp4')):
+    if not video_file.endswith(('.mp4')): 
         return
     
     video_path = os.path.join(video_folder, video_file)
@@ -183,23 +179,26 @@ def main():
     log_thread.daemon = True
     log_thread.start()
     
-    videos_to_process = [f for f in os.listdir(video_folder) 
-                        if f.endswith(('.mp4'))]
+    videos_to_process = [f for f in os.listdir(video_folder) if f.endswith(('.mp4'))]
     
     total_videos = len(videos_to_process)
     log.info(f"Found {total_videos} videos to process")
     
-    # Determine the number of processes to use (leave one core free)
-    num_processes = max(1, mpc.cpu_count() - 1)
-    log.info(f"Using {num_processes} parallel processes")
-    
-    # Create a pool of processes
-    with mpc.Pool(processes=num_processes) as pool:
-        # Create a list of (video_file, total_videos, index) tuples for each video
-        tasks = [(video, total_videos) for i, video in enumerate(videos_to_process)]
+    # Create a manager to handle the shared variable processed_videos
+    with mpc.Manager() as manager:
+        processed_videos = manager.Value('i', 0)  # Shared integer variable for processed videos
         
-        # Map the process_video function to the tasks
-        pool.starmap(process_video, tasks)
+        # Determine the number of processes to use (leave one core free)
+        num_processes = max(1, mpc.cpu_count() - 1)
+        log.info(f"Using {num_processes} parallel processes")
+        
+        # Create a pool of processes
+        with mpc.Pool(processes=num_processes) as pool:
+            # Create a list of (video_file, total_videos) tuples for each video
+            tasks = [(video, total_videos, processed_videos) for video in videos_to_process]
+            
+            # Map the process_video function to the tasks
+            pool.starmap(process_video, tasks)
     
     # Signal the logging thread to exit
     log_queue.put(None)
