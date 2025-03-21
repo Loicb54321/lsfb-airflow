@@ -1,6 +1,8 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from datetime import datetime, timedelta
+import sys
+sys.path.append('/opt/airflow')
 
 # Import functions
 from scripts.tasks.check_and_download_data import check_and_download_data
