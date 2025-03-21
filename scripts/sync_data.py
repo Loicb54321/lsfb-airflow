@@ -136,6 +136,7 @@ def sync_files():
     time.sleep(5)
     log.info(f"deleted files : {deleted_files}")
     time.sleep(5)
+    sys.stdout.flush()
 
     return added_files, modified_files, deleted_files
 
