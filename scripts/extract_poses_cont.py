@@ -58,6 +58,9 @@ for folder in {**output_folders, **filtered_output_folders}.values():
 # A thread-safe queue for logging
 log_queue = queue.Queue()
 
+# Global variable to track processed videos
+processed_videos = 0
+
 # Thread function to process logs
 def log_worker():
     while True:
@@ -182,7 +185,6 @@ def main():
     
     videos_to_process = [f for f in os.listdir(video_folder) 
                         if f.endswith(('.mp4'))]
-    processed_videos = 0
     
     total_videos = len(videos_to_process)
     log.info(f"Found {total_videos} videos to process")
