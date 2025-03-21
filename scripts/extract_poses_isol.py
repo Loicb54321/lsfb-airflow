@@ -63,7 +63,7 @@ for video_file in videos_to_process:
     log.info(f"⏱️ Video {progression}/{len(videos_to_process)}: {video_file} ...")
     sys.stdout.flush()
 
-    if not video_file.endswith(('.mp4', '.avi', '.mov')):  # Ensure it's a video file
+    if not video_file.endswith(('.mp4')):  # Ensure it's a video file
         continue
 
     video_path = os.path.join(video_folder, video_file)

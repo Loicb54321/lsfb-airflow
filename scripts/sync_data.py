@@ -130,6 +130,13 @@ def sync_files():
     file_update = {**modified_files, **added_files}
     save_file_update(file_update)
 
+    log.info(f"added files : {added_files}")
+    time.sleep(5)
+    log.info(f"modified files : {modified_files}")
+    time.sleep(5)
+    log.info(f"deleted files : {deleted_files}")
+    time.sleep(5)
+
     return added_files, modified_files, deleted_files
 
 def extract_base_names(elan_path):
@@ -285,14 +292,6 @@ def main():
 
     added_files, modified_files, deleted_files = sync_files()
 
-    log.info(f"added files : {added_files}")
-    sys.stdout.flush()
-    time.sleep(5)
-    log.info(f"modified files : {modified_files}")
-    sys.stdout.flush()
-    time.sleep(5)
-    log.info(f"deleted files : {deleted_files}")
-    sys.stdout.flush()
     time.sleep(30) 
 
     print("🗑️ Cleaning deleted files...")

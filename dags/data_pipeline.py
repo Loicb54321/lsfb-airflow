@@ -1,13 +1,14 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from datetime import datetime, timedelta
-import subprocess
-import os
-import json
-from dotenv import load_dotenv
-load_dotenv()
 
-LOCAL_SERVER = os.getenv("LOCAL_SERVER")
+# Import functions
+from scripts.tasks.check_and_download_data import check_and_download_data
+from scripts.tasks.run_video_script import run_video_script
+from scripts.tasks.run_extract_poses_cont import run_extract_poses_cont
+from scripts.tasks.run_extract_poses_isol import run_extract_poses_isol
+from scripts.tasks.create_splits import create_splits
+from scripts.tasks.update_csv import update_csv
 
 # Define default DAG arguments
 default_args = {
@@ -27,127 +28,6 @@ dag = DAG(
     schedule=None,  # Manually triggered
     catchup=False,
 )
-
-# Function to check and download data from Server X
-def check_and_download_data():
-    try:
-        result = subprocess.run(
-            ["python3", "/opt/airflow/scripts/sync_data.py"],
-            check=True,
-            capture_output=True,  # Capture stdout/stderr
-            text=True
-        )
-        print("Script output:", result.stdout)
-    except subprocess.CalledProcessError as e:
-        print("Script failed!", e.stderr)
-        raise
-
-# Function to treat the video files + update the CSV files
-def run_video_script():
-    script_path = "/opt/airflow/scripts/convert_video_files.py"
-    elan_dir = os.path.join(LOCAL_SERVER, "ELAN_OUT")     
-    output_dir = os.path.join(LOCAL_SERVER, "isol/videos")  
-    update_file = os.path.join(LOCAL_SERVER, "file_update.json")
-
-    # Load the update file
-    with open(update_file, "r", encoding="utf-8") as f:
-        update_data = json.load(f)
-
-    # Extract filenames from JSON keys
-    elan_names_to_update = set(update_data.keys())
-
-    # Find all .eaf files that match the update list
-    elan_files = [
-        os.path.join(root, file)
-        for root, _, files in os.walk(elan_dir)
-        for file in files if file.endswith(".eaf") and file in elan_names_to_update
-    ]
-
-    print(f"✅ Found {len(elan_files)} ELAN files to process:\n{elan_files}")
-
-    if not elan_files:
-        print("❌ No ELAN files found in", elan_dir)
-        return
-    
-    progression = 0
-
-    for elan_file in elan_files:
-        progression += 1
-        print(f"⏱️ Processing ELAN file {progression}/{len(elan_files)}: {elan_file}")
-        try:
-            print(f"🚀 Processing {elan_file} ...")
-            result = subprocess.run(
-                ["python3", script_path, "--elan_file", elan_file, "--output_dir", output_dir],  #, "--json_file", update_file],
-                check=True, text=True, capture_output=True
-            )
-            print("✅ Script Output:", result.stdout)
-        except subprocess.CalledProcessError as e:
-            print(f"❌ Script failed for {elan_file} with error:", e.stderr)
-            continue  # Move to the next file instead of stopping execution
-
-def run_extract_poses_cont():
-    try:
-        process = subprocess.Popen(
-            ["python3", "/opt/airflow/scripts/extract_poses_cont.py"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            bufsize=1,
-        )
-        for line in process.stdout:
-            print(line, end='', flush=True)
-        exit_code = process.wait()
-        if exit_code != 0:
-            raise subprocess.CalledProcessError(exit_code, process.args)
-    except Exception as e:
-        print(f"Script failed! {str(e)}")
-        raise
-
-def run_extract_poses_isol():
-    try:
-        process = subprocess.Popen(
-            ["python3", "/opt/airflow/scripts/extract_poses_isol.py"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            bufsize=1,
-        )
-        for line in process.stdout:
-            print(line, end='', flush=True)
-        exit_code = process.wait()
-        if exit_code != 0:
-            raise subprocess.CalledProcessError(exit_code, process.args)
-    except Exception as e:
-        print(f"Script failed! {str(e)}")
-        raise
-
-def create_splits():
-    try:
-        result = subprocess.run(
-            ["python3", "/opt/airflow/scripts/create_splits_V2.py"],
-            check=True,
-            capture_output=True,  # Capture stdout/stderr
-            text=True
-        )
-        print("Script output:", result.stdout)
-    except subprocess.CalledProcessError as e:
-        print("Script failed!", e.stderr)
-        raise
-
-def update_csv():
-    try:
-        result = subprocess.run(
-            ["python3", "/opt/airflow/scripts/update_csv.py"],
-            check=True,
-            capture_output=True,  # Capture stdout/stderr
-            text=True
-        )
-        print("Script output:", result.stdout)
-    except subprocess.CalledProcessError as e:
-        print("Script failed!", e.stderr)
-        raise
-
-
 
 # Define tasks
 task_check_server = PythonOperator(
