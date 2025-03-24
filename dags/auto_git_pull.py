@@ -3,14 +3,10 @@ from airflow.operators.python import PythonOperator
 import git
 import os
 from datetime import datetime
-from dotenv import load_dotenv
-load_dotenv()
-
-LOCAL_SERVER = os.getenv("LOCAL_SERVER")
 
 # Function to pull the latest changes from the Git repository
 def pull_git_repo():
-    repo_dir = LOCAL_SERVER
+    repo_dir = "/opt/airflow/"
     try:
         # Open the repo
         repo = git.Repo(repo_dir)
