@@ -20,9 +20,11 @@ RUN apt-get update && \
         mime-support && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
-    # Workaround for segfault issue
     rm -f /var/lib/dpkg/info/shared-mime-info.postinst && \
     dpkg --configure -a
+
+# Install msodbcsql18 with EULA acceptance
+RUN DEBIAN_FRONTEND=noninteractive ACCEPT_EULA=Y apt-get install -y --no-install-recommends msodbcsql18
 
 # Set the default command to run Airflow
 CMD ["bash"]
