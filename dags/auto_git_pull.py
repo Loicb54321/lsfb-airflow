@@ -34,17 +34,13 @@ def force_git_pull():
         logger.error(f"Unexpected error: {str(e)}")
         raise
 
+# Define the DAG
 dag = DAG(
-    'git_repo_sync',
-    description='Force synchronize Git repository',
-    schedule_interval='*/5 * * * *',  # Every 5 minutes
+    'git_pull_dag',
+    description='A simple DAG to pull from a Git repository',
+    schedule_interval='* * * * *',
     start_date=datetime(2025, 3, 24),
     catchup=False,
-    default_args={
-        'retries': 2,
-        'retry_delay': timedelta(minutes=2),
-        'email_on_retry': False
-    }
 )
 
 sync_task = PythonOperator(
