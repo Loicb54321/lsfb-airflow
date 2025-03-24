@@ -189,7 +189,7 @@ def main():
         processed_videos = manager.Value('i', 0)  # Shared integer variable for processed videos
         
         # Determine the number of processes to use (leave two core free)
-        num_processes = max(1, mpc.cpu_count() - 2)
+        num_processes = max(1, mpc.cpu_count() - 5)
         log.info(f"Using {num_processes} parallel processes")
         
         # Create a pool of processes
