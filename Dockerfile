@@ -8,7 +8,13 @@ ENV AIRFLOW_HOME=/opt/airflow
 RUN pip install --no-cache-dir pympi-ling tqdm moviepy mediapipe python-dotenv huggingface_hub datasets GitPython
 
 USER root
-RUN apt-get update && apt-get install -y libglib2.0-0 libgl1-mesa-glx
-
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        libglib2.0-0 \
+        libgl1-mesa-glx \
+        shared-mime-info && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+    
 # Set the default command to run Airflow
 CMD ["bash"]
