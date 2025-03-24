@@ -1,4 +1,4 @@
-import os  #test deploy auto bis crontab test  
+import os  #test deploy auto bis crontab test bis
 import numpy as np
 import mediapipe as mp
 import sys
