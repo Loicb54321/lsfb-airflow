@@ -202,7 +202,7 @@ def main():
     
     # Signal the logging thread to exit
     log_queue.put(None)
-    log_thread.join()
+    log_thread.join() 
     
     log.info("Processing complete! NPY files saved in separate folders.")
 
