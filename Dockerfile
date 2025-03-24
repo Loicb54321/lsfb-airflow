@@ -22,6 +22,8 @@ RUN apt-get update && \
         libgl1-mesa-glx \
         shared-mime-info \
         mime-support && \
+    git config --global --add safe.directory $AIRFLOW_HOME && \
+    chown -R airflow:airflow $AIRFLOW_HOME \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     # Workaround for segfault issue
