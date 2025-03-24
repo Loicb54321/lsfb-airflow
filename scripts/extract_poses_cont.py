@@ -1,4 +1,4 @@
-import os  #test deploy auto      
+import os  #test deploy auto bis      
 import numpy as np
 import mediapipe as mp
 import sys
