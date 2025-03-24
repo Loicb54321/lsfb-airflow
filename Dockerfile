@@ -8,15 +8,21 @@ ENV AIRFLOW_HOME=/opt/airflow
 RUN pip install --no-cache-dir pympi-ling tqdm moviepy mediapipe python-dotenv huggingface_hub datasets GitPython
 
 USER root
+
+# First perform a full system upgrade
 RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-broken \
+    DEBIAN_FRONTEND=noninteractive apt-get upgrade -y --no-install-recommends && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        ca-certificates \
         libglib2.0-0 \
         libgl1-mesa-glx \
         shared-mime-info \
         mime-support && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
-    update-mime-database /usr/share/mime
+    # Workaround for segfault issue
+    rm -f /var/lib/dpkg/info/shared-mime-info.postinst && \
+    dpkg --configure -a
 
 # Set the default command to run Airflow
 CMD ["bash"]
