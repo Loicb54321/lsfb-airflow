@@ -17,6 +17,7 @@ RUN apt-get update && \
     ACCEPT_EULA=Y \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
         ca-certificates \
+        git \
         libglib2.0-0 \
         libgl1-mesa-glx \
         shared-mime-info \
