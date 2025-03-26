@@ -229,14 +229,113 @@ def main():
 
 def process_video_resource_aware(video_file, total_videos, processed_videos_list, list_lock):
     log.info(f"Processing {video_file}")
-    try:
-        # Your original video processing logic here
-        time.sleep(10) # Simulate processing
+    mp_holistic = mp.solutions.holistic
+    holistic = mp_holistic.Holistic(static_image_mode=False, model_complexity=2)
+
+    # Skip non-video files (this check might be redundant as we filter in main)
+    if not video_file.endswith(('.mp4')):
+        return
+
+    video_path = os.path.join(video_folder, video_file)
+    base_name = os.path.splitext(video_file)[0]
+
+    # Define expected output file paths
+    expected_files = {
+        "pose": os.path.join(output_folders["pose"], f"{base_name}_pose.npy"),
+        "face": os.path.join(output_folders["face"], f"{base_name}_face.npy"),
+        "left_hand": os.path.join(output_folders["left_hand"], f"{base_name}_left_hand.npy"),
+        "right_hand": os.path.join(output_folders["right_hand"], f"{base_name}_right_hand.npy"),
+    }
+    expected_filtered_files = {
+        "pose": os.path.join(filtered_output_folders["pose"], f"{base_name}_pose.npy"),
+        "face": os.path.join(filtered_output_folders["face"], f"{base_name}_face.npy"),
+        "left_hand": os.path.join(filtered_output_folders["left_hand"], f"{base_name}_left_hand.npy"),
+        "right_hand": os.path.join(filtered_output_folders["right_hand"], f"{base_name}_pose.npy"), # Typo here, should be right_hand
+    }
+    expected_filtered_files["right_hand"] = os.path.join(filtered_output_folders["right_hand"], f"{base_name}_right_hand.npy")
+
+
+    # Check if all expected output files already exist
+    if all(os.path.exists(path) for path in {**expected_files, **expected_filtered_files}.values()):
+        log.info(f"✅ Video: {video_file} - Already processed. Skipping.")
         with list_lock:
             processed_videos_list.append(video_file)
-        log.info(f"Finished processing {video_file}. Processed {len(processed_videos_list)}/{total_videos}")
+        return
+    log.info(f"🚀 Video: {video_file} - Starting process...")
+    sys.stdout.flush()
+    start_time = time.time()
+
+    try:
+        # Load the video using MoviePy
+        video_clip = VideoFileClip(video_path)
+        frame_rate = video_clip.fps  # Get the frame rate of the video
+        total_frames = int(video_clip.duration * frame_rate)
+
+        # Process each frame
+        pose_data, face_data, left_hand_data, right_hand_data = [], [], [], []
+
+        # Log progress every 10% of frames
+        progress_interval = max(1, total_frames // 10)
+        frame_count = 0
+
+        for frame in video_clip.iter_frames(fps=frame_rate, dtype="uint8"):
+            # Convert the frame to an Image object
+            img = Image.fromarray(frame)
+
+            # Convert image to Mediapipe format
+            img_np = np.array(img)
+            results = holistic.process(img_np)
+
+            # Extract landmarks
+            def extract_landmarks(landmark_list, num_points):
+                if landmark_list:
+                    return np.array([[lm.x, lm.y, lm.z] for lm in landmark_list.landmark])
+                else:
+                    return np.zeros((num_points, 3))  # Placeholder if no detection
+
+            pose_data.append(extract_landmarks(results.pose_landmarks, 33))
+            face_data.append(extract_landmarks(results.face_landmarks, 468))
+            left_hand_data.append(extract_landmarks(results.left_hand_landmarks, 21))
+            right_hand_data.append(extract_landmarks(results.right_hand_landmarks, 21))
+
+            frame_count += 1
+            if frame_count % progress_interval == 0:
+                progress = (frame_count / total_frames) * 100
+                log.info(f"  🔄 Video: {video_file} - {progress:.1f}% processed ({frame_count}/{total_frames} frames)")
+
+        # Convert to NumPy arrays
+        pose_data_np = np.array(pose_data)
+        face_data_np = np.array(face_data)
+        left_hand_data_np = np.array(left_hand_data)
+        right_hand_data_np = np.array(right_hand_data)
+        data_np = [pose_data_np, face_data_np, left_hand_data_np, right_hand_data_np]
+        body_parts = ["pose", "face", "left_hand", "right_hand"]
+
+        log.info(f"  💾 Video: {video_file} - Saving data to disk...")
+
+        for i in range(4):
+            np.save(expected_files[body_parts[i]], data_np[i])  # Save raw poses data
+            if data_np[i].shape[0] > 7:  # Ensure enough frames for filtering
+                filtered_pose_data = filtering(data_np[i])
+                np.save(expected_filtered_files[body_parts[i]], filtered_pose_data)
+            else:
+                np.save(expected_filtered_files[body_parts[i]], data_np[i])
+
+        # Close video to free resources
+        video_clip.close()
+
+        end_time = time.time()
+        duration = end_time - start_time
+        log.info(f"✅ Video: {video_file} - Completed in {duration:.2f} seconds")
+        with list_lock:
+            processed_videos_list.append(video_file)
+
     except Exception as e:
-        log.error(f"Error processing {video_file}: {e}")
+        log.info(f"❌ Video: {video_file} - Error: {str(e)}")
+
+    finally:
+        if 'holistic' in locals():
+            holistic.close()
 
 if __name__ == "__main__":
     main()
