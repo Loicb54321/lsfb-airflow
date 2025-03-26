@@ -200,12 +200,15 @@ def main():
         log.info(f"Current CPU Usage: {cpu_usage}%, Memory Usage: {mem_usage}%, Swap Usage: {swap_usage}%, Processed Videos: {len(processed_videos_list)}/{total_videos}")
 
         # Determine the number of processes based on resource availability
-        if cpu_usage > 70 or mem_usage > 80 or swap_usage > 50:
-            num_processes = max(1, os.cpu_count() - 7) # Reduce drastically
+        if cpu_usage > 95 or mem_usage > 80 or swap_usage > 50:
+            num_processes = max(1, os.cpu_count() - 6) # Reduce drastically
             log.warning(f"High resource usage. Using {num_processes} parallel processes.")
-        elif cpu_usage < 50 and mem_usage < 60 and swap_usage < 30:
+        elif cpu_usage < 95 and mem_usage < 60 and swap_usage < 30:
             num_processes = max(1, os.cpu_count() - 2) # Use more cores
             log.info(f"Resource usage is low. Using {num_processes} parallel processes.")
+        elif cpu_usage < 70 and mem_usage < 60 and swap_usage < 30:
+            num_processes = max(1, os.cpu_count() - 1) # Use more cores
+            log.info(f"Resource usage is very low. Using {num_processes} parallel processes.")
         else:
             num_processes = max(1, os.cpu_count() - 4) # Moderate usage
             log.info(f"Moderate resource usage. Using {num_processes} parallel processes.")
