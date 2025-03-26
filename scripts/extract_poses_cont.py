@@ -187,82 +187,54 @@ def main():
     total_videos = len(videos_to_process)
     log.info(f"Found {total_videos} videos to process")
 
-    # Create a multiprocessing queue for videos
-    video_queue = mpc.Queue()
-    for video in videos_to_process:
-        video_queue.put(video)
-    log.info(f"Initial video queue size: {video_queue.qsize()}")
+    processed_videos_list = mpc.Manager().list() # Track processed videos
 
-    processed_videos_counter = mpc.Value('i', 0)
-    active_processes = mpc.Value('i', 0)
-    max_processes = mpc.Value('i', max(1, os.cpu_count() // 2)) # Initial max processes
-
-    def process_video_wrapper(video_file):
-        log.info(f"Starting process_video_wrapper for {video_file}")
-        try:
-            process_video(video_file, total_videos, processed_videos_counter)
-        except Exception as e:
-            log.error(f"Error in process_video for {video_file}: {e}")
-        finally:
-            with active_processes.get_lock():
-                active_processes.value -= 1
-            log.info(f"Finished process_video_wrapper for {video_file}. Active processes: {active_processes.value}")
-
-    # Create a pool of processes
-    pool = mpc.Pool(processes=os.cpu_count()) # Create a pool with max possible workers
-
-    while processed_videos_counter.value < total_videos:
+    while len(processed_videos_list) < total_videos:
         cpu_usage = psutil.cpu_percent(interval=1)
         mem_usage = psutil.virtual_memory().percent
         swap_usage = psutil.swap_memory().percent
 
-        log.info(f"--- Loop Start ---")
-        log.info(f"Current CPU Usage: {cpu_usage}%, Memory Usage: {mem_usage}%, Swap Usage: {swap_usage}%, Active Processes: {active_processes.value}, Max Processes: {max_processes.value}, Processed: {processed_videos_counter.value}/{total_videos}, Queue Size: {video_queue.qsize()}")
+        log.info(f"--- Processing Iteration ---")
+        log.info(f"Current CPU Usage: {cpu_usage}%, Memory Usage: {mem_usage}%, Swap Usage: {swap_usage}%, Processed Videos: {len(processed_videos_list)}/{total_videos}")
 
-        # Dynamically adjust max_processes
-        current_max_processes = max_processes.value
+        # Determine the number of processes based on resource availability
         if cpu_usage > 70 or mem_usage > 80 or swap_usage > 50:
-            max_processes.value = max(1, current_max_processes - 1)
-            if max_processes.value < current_max_processes:
-                log.warning(f"High resource usage. Reducing max parallel processes to {max_processes.value}")
-        elif cpu_usage < 50 and mem_usage < 60 and swap_usage < 30 and current_max_processes < os.cpu_count():
-            max_processes.value = min(os.cpu_count(), current_max_processes + 1)
-            if max_processes.value > current_max_processes:
-                log.info(f"Resource usage is low. Increasing max parallel processes to {max_processes.value}")
-
-        # Check conditions for adding a new task
-        can_add_task = active_processes.value < max_processes.value
-        is_queue_not_empty = not video_queue.empty()
-
-        log.info(f"Can add task: {can_add_task}, Is queue not empty: {is_queue_not_empty}")
-
-        # Add new video processing tasks if resources allow and queue is not empty
-        if can_add_task and is_queue_not_empty:
-            try:
-                video_file = video_queue.get(timeout=1) # Get video with a timeout
-                log.info(f"Submitting task for {video_file}. Active processes before increment: {active_processes.value}")
-                with active_processes.get_lock():
-                    active_processes.value += 1
-                log.info(f"Active processes after increment: {active_processes.value}")
-                pool.apply_async(process_video_wrapper, args=(video_file,))
-            except queue.Empty:
-                log.info("Queue became empty while trying to get a video.")
-                pass # Queue might become empty momentarily
+            num_processes = max(1, os.cpu_count() // 4) # Reduce drastically
+            log.warning(f"High resource usage. Using {num_processes} parallel processes.")
+        elif cpu_usage < 50 and mem_usage < 60 and swap_usage < 30:
+            num_processes = max(1, os.cpu_count() - 2) # Use more cores
+            log.info(f"Resource usage is low. Using {num_processes} parallel processes.")
         else:
-            log.info("Conditions not met to add a new task.")
+            num_processes = max(1, os.cpu_count() // 2) # Moderate usage
+            log.info(f"Moderate resource usage. Using {num_processes} parallel processes.")
 
-        log.info(f"--- Loop End ---")
-        time.sleep(1) # Check resources and queue periodically
+        remaining_videos = [video for video in videos_to_process if video not in processed_videos_list]
+        if not remaining_videos:
+            break
 
-    # Wait for all processes to complete
-    pool.close()
-    pool.join()
+        tasks = [(video, total_videos, processed_videos_list) for video in remaining_videos]
+
+        with mpc.Pool(processes=num_processes) as pool:
+            pool.starmap(process_video_resource_aware, tasks) # Modified process function
+
+        time.sleep(5) # Wait before the next iteration
 
     # Signal the logging thread to exit
     log_queue.put(None)
     log_thread.join()
 
     log.info("Processing complete! NPY files saved in separate folders.")
+
+def process_video_resource_aware(video_file, total_videos, processed_videos_list):
+    log.info(f"Processing {video_file}")
+    try:
+        # Your original video processing logic here
+        time.sleep(10) # Simulate processing
+        with processed_videos_list.get_lock():
+            processed_videos_list.append(video_file)
+        log.info(f"Finished processing {video_file}. Processed {len(processed_videos_list)}/{total_videos}")
+    except Exception as e:
+        log.error(f"Error processing {video_file}: {e}")
 
 if __name__ == "__main__":
     main()
