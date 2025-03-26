@@ -211,8 +211,8 @@ def main():
                 end_index = min(start_index + chunk_size, num_tasks)
                 current_tasks = tasks[start_index:end_index]
 
-                pool.starmap_async(process_video, current_tasks)
-                pool.get() # Wait for the current chunk to complete
+                async_result = pool.starmap_async(process_video, current_tasks)
+                async_result.get()  # Wait for the current chunk to complete
 
                 start_index = end_index
 
@@ -231,7 +231,7 @@ def main():
                     chunk_size = min(initial_processes, chunk_size + 1)
                     log.info(f"Resource usage is low (CPU: {cpu_usage}%, Mem: {mem_usage}%, Swap: {swap_usage}%). Increasing parallel processes to {chunk_size}")
 
-                time.sleep(5) # Small delay to avoid overwhelming the system
+                time.sleep(10) # Small delay to avoid overwhelming the system
 
     # Signal the logging thread to exit
     log_queue.put(None)
