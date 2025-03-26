@@ -201,23 +201,31 @@ def main():
 
         # Determine the number of processes based on resource availability
         if cpu_usage > 70 or mem_usage > 80 or swap_usage > 50:
-            num_processes = max(1, os.cpu_count() // 4) # Reduce drastically
+            num_processes = max(1, os.cpu_count() // 8) # Reduce drastically
             log.warning(f"High resource usage. Using {num_processes} parallel processes.")
         elif cpu_usage < 50 and mem_usage < 60 and swap_usage < 30:
-            num_processes = max(1, os.cpu_count() - 2) # Use more cores
+            num_processes = max(1, os.cpu_count() // 4) # Use more cores
             log.info(f"Resource usage is low. Using {num_processes} parallel processes.")
         else:
-            num_processes = max(1, os.cpu_count() // 2) # Moderate usage
+            num_processes = max(1, os.cpu_count() // 6) # Moderate usage
             log.info(f"Moderate resource usage. Using {num_processes} parallel processes.")
 
         remaining_videos = [video for video in videos_to_process if video not in processed_videos_list]
         if not remaining_videos:
             break
 
-        tasks = [(video, total_videos, processed_videos_list, list_lock) for video in remaining_videos]
+        videos_to_process_in_this_iteration = remaining_videos[:num_processes] # Process a limited number of videos
 
-        with mpc.Pool(processes=num_processes) as pool:
-            pool.starmap(process_video_resource_aware, tasks) # Modified process function
+        if videos_to_process_in_this_iteration:
+            tasks = [(video, total_videos, processed_videos_list, list_lock) for video in videos_to_process_in_this_iteration]
+
+            pool = mpc.Pool(processes=num_processes)
+            pool.starmap(process_video_resource_aware, tasks)
+            pool.close()
+            pool.join()
+            log.info("Pool closed and joined.")
+        else:
+            log.info("No videos to process in this iteration.")
 
         time.sleep(5) # Wait before the next iteration
 
