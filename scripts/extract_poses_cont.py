@@ -183,62 +183,65 @@ def main():
     log_thread.start()
 
     videos_to_process = [f for f in os.listdir(video_folder) if f.endswith(('.mp4'))]
-
     total_videos = len(videos_to_process)
     log.info(f"Found {total_videos} videos to process")
 
-    # Create a manager to handle the shared variable processed_videos
-    with mpc.Manager() as manager:
-        processed_videos = manager.Value('i', 0)  # Shared integer variable for processed videos
+    # Create a multiprocessing queue for videos
+    video_queue = mpc.Queue()
+    for video in videos_to_process:
+        video_queue.put(video)
 
-        # Determine the number of processes to use based on available CPU
-        cpu_available = os.cpu_count()
-        # Start with a more conservative number of processes
-        initial_processes = max(1, cpu_available // 2)
-        num_processes = initial_processes
-        log.info(f"Starting with {num_processes} parallel processes (based on {cpu_available} CPUs)")
+    processed_videos_counter = mpc.Value('i', 0)
+    active_processes = mpc.Value('i', 0)
+    max_processes = mpc.Value('i', max(1, os.cpu_count() // 2)) # Initial max processes
 
-        # Create a pool of processes
-        with mpc.Pool(processes=num_processes) as pool:
-            tasks = [(video, total_videos, processed_videos) for video in videos_to_process]
+    def process_video_wrapper(video_file):
+        process_video(video_file, total_videos, processed_videos_counter)
+        with active_processes.get_lock():
+            active_processes.value -= 1
 
-            # Submit tasks in chunks and monitor resources
-            chunk_size = 2  # Process a small number of videos in parallel initially
-            num_tasks = len(tasks)
-            start_index = 0
+    # Create a pool of processes
+    pool = mpc.Pool(processes=os.cpu_count()) # Create a pool with max possible workers
 
-            while start_index < num_tasks:
-                end_index = min(start_index + chunk_size, num_tasks)
-                current_tasks = tasks[start_index:end_index]
+    while processed_videos_counter.value < total_videos:
+        cpu_usage = psutil.cpu_percent(interval=1)
+        mem_usage = psutil.virtual_memory().percent
+        swap_usage = psutil.swap_memory().percent
 
-                async_result = pool.starmap_async(process_video, current_tasks)
-                async_result.get()  # Wait for the current chunk to complete
+        log.info(f"Current CPU Usage: {cpu_usage}%, Memory Usage: {mem_usage}%, Swap Usage: {swap_usage}%, Active Processes: {active_processes.value}, Processed: {processed_videos_counter.value}/{total_videos}")
 
-                start_index = end_index
+        # Dynamically adjust max_processes
+        current_max_processes = max_processes.value
+        if cpu_usage > 70 or mem_usage > 80 or swap_usage > 50:
+            max_processes.value = max(1, current_max_processes - 1)
+            if max_processes.value < current_max_processes:
+                log.warning(f"High resource usage. Reducing max parallel processes to {max_processes.value}")
+        elif cpu_usage < 50 and mem_usage < 60 and swap_usage < 30 and current_max_processes < os.cpu_count():
+            max_processes.value = min(os.cpu_count(), current_max_processes + 1)
+            if max_processes.value > current_max_processes:
+                log.info(f"Resource usage is low. Increasing max parallel processes to {max_processes.value}")
 
-                # Adjust the number of processes for the next chunk based on current CPU and Memory usage
-                cpu_usage = psutil.cpu_percent(interval=1) # Get CPU usage over 1 second
-                mem_usage = psutil.virtual_memory().percent
-                swap_usage = psutil.swap_memory().percent
+        # Add new video processing tasks if resources allow and queue is not empty
+        if active_processes.value < max_processes.value and not video_queue.empty():
+            try:
+                video_file = video_queue.get(timeout=1) # Get video with a timeout
+                with active_processes.get_lock():
+                    active_processes.value += 1
+                pool.apply_async(process_video_wrapper, args=(video_file,))
+            except queue.Empty:
+                pass # Queue might become empty momentarily
 
-                log.info(f"Current CPU Usage: {cpu_usage}%, Memory Usage: {mem_usage}%, Swap Usage: {swap_usage}%")
+        time.sleep(1) # Check resources and queue periodically
 
-                # Dynamically adjust chunk size (number of parallel processes)
-                if cpu_usage > 70 or mem_usage > 80 or swap_usage > 50: # Increased swap threshold
-                    chunk_size = max(1, chunk_size - 1)
-                    log.warning(f"High resource usage detected (CPU: {cpu_usage}%, Mem: {mem_usage}%, Swap: {swap_usage}%). Reducing parallel processes to {chunk_size}")
-                elif cpu_usage < 50 and mem_usage < 60 and swap_usage < 30 and chunk_size < initial_processes: # Added swap condition
-                    chunk_size = min(initial_processes, chunk_size + 1)
-                    log.info(f"Resource usage is low (CPU: {cpu_usage}%, Mem: {mem_usage}%, Swap: {swap_usage}%). Increasing parallel processes to {chunk_size}")
-
-                time.sleep(10) # Small delay to avoid overwhelming the system
+    # Wait for all processes to complete
+    pool.close()
+    pool.join()
 
     # Signal the logging thread to exit
     log_queue.put(None)
     log_thread.join()
 
     log.info("Processing complete! NPY files saved in separate folders.")
-
 
 if __name__ == "__main__":
     main()
