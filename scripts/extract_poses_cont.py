@@ -14,6 +14,8 @@ import multiprocessing as mpc
 import time
 import queue
 import threading
+import logging
+from logging.handlers import QueueHandler
 
 load_dotenv()
 log = LoggingMixin().log 
@@ -58,18 +60,31 @@ filtered_output_folders = {
 for folder in {**output_folders, **filtered_output_folders}.values():
     os.makedirs(folder, exist_ok=True)
 
-# A thread-safe queue for logging
-log_queue = queue.Queue()
+# Multiprocessing-safe queue for logging
+manager = mpc.Manager()
+log_queue = manager.Queue()
+
+# Configure root logger
+def setup_logger():
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+    logger.handlers = []
+    logger.addHandler(QueueHandler(log_queue))
 
 # Thread function to process logs
 def log_worker():
+    setup_logger()
     while True:
-        message = log_queue.get()
-        if message is None:  # Sentinel to exit
+        try:
+            record = log_queue.get(timeout=1)
+            if record is None:
+                break
+            logger = logging.getLogger()
+            logger.handle(record)
+        except queue.Empty:
+            continue
+        except KeyboardInterrupt:
             break
-        log.info(message)
-        sys.stdout.flush()
-        log_queue.task_done()
 
 # Function to process a single video
 def process_video(video_file, total_videos, processed_videos):
