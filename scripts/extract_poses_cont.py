@@ -187,7 +187,9 @@ def main():
     total_videos = len(videos_to_process)
     log.info(f"Found {total_videos} videos to process")
 
-    processed_videos_list = mpc.Manager().list() # Track processed videos
+    manager = mpc.Manager()
+    processed_videos_list = manager.list() # Track processed videos
+    list_lock = manager.Lock() # Create a lock
 
     while len(processed_videos_list) < total_videos:
         cpu_usage = psutil.cpu_percent(interval=1)
@@ -212,7 +214,7 @@ def main():
         if not remaining_videos:
             break
 
-        tasks = [(video, total_videos, processed_videos_list) for video in remaining_videos]
+        tasks = [(video, total_videos, processed_videos_list, list_lock) for video in remaining_videos]
 
         with mpc.Pool(processes=num_processes) as pool:
             pool.starmap(process_video_resource_aware, tasks) # Modified process function
@@ -225,12 +227,12 @@ def main():
 
     log.info("Processing complete! NPY files saved in separate folders.")
 
-def process_video_resource_aware(video_file, total_videos, processed_videos_list):
+def process_video_resource_aware(video_file, total_videos, processed_videos_list, list_lock):
     log.info(f"Processing {video_file}")
     try:
         # Your original video processing logic here
         time.sleep(10) # Simulate processing
-        with processed_videos_list.get_lock():
+        with list_lock:
             processed_videos_list.append(video_file)
         log.info(f"Finished processing {video_file}. Processed {len(processed_videos_list)}/{total_videos}")
     except Exception as e:
