@@ -274,6 +274,7 @@ def main():
 
 def process_video_resource_aware(video_file, total_videos, processed_videos_list, list_lock):
     log.info(f"Processing {video_file}")
+    start_time = time.time()
     mp_holistic = mp.solutions.holistic
     holistic = mp_holistic.Holistic(static_image_mode=False, model_complexity=2)
 
